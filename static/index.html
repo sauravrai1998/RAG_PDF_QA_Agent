@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG PDF QA Agent</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; color: #111; }
+    h1 { margin-top: 0; }
+    .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    button { background: #111827; color: white; border: none; padding: 0.6rem 1rem; border-radius: 8px; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    input[type="file"] { margin: 0.5rem 0; }
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .half { flex: 1 1 480px; min-width: 320px; }
+    .sources { background: #f9fafb; border-radius: 8px; padding: 0.75rem; font-size: 0.95rem; }
+    pre { white-space: pre-wrap; word-wrap: break-word; }
+  </style>
+ </head>
+<body>
+  <h1>RAG PDF QA Agent</h1>
+  <div class="row">
+    <div class="card half">
+      <h3>Build knowledge base</h3>
+      <input id="pdfs" type="file" accept="application/pdf" multiple />
+      <div>
+        <button id="ingestBtn">Ingest</button>
+      </div>
+      <p id="ingestStatus"></p>
+    </div>
+    <div class="card half">
+      <h3>Ask a question</h3>
+      <input id="question" type="text" placeholder="e.g., What is the warranty policy?" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #e5e7eb;" />
+      <div style="margin-top: 0.75rem;">
+        <button id="askBtn">Ask</button>
+      </div>
+      <div id="answer" style="margin-top: 1rem;"></div>
+    </div>
+  </div>
+
+  <script>
+    const ingestBtn = document.getElementById('ingestBtn');
+    const ingestStatus = document.getElementById('ingestStatus');
+    const fileInput = document.getElementById('pdfs');
+    const askBtn = document.getElementById('askBtn');
+    const questionInput = document.getElementById('question');
+    const answerDiv = document.getElementById('answer');
+
+    ingestBtn.addEventListener('click', async () => {
+      const files = fileInput.files;
+      if (!files || files.length === 0) {
+        alert('Select at least one PDF.');
+        return;
+      }
+      ingestBtn.disabled = true;
+      ingestStatus.textContent = 'Ingesting...';
+      const formData = new FormData();
+      for (const f of files) formData.append('files', f);
+      try {
+        const res = await fetch('/ingest', { method: 'POST', body: formData });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.detail || 'Ingestion failed');
+        ingestStatus.textContent = `Done. Added ${json.added_chunks} chunks (total ${json.total_chunks}).`;
+      } catch (e) {
+        ingestStatus.textContent = 'Error: ' + e.message;
+      } finally {
+        ingestBtn.disabled = false;
+      }
+    });
+
+    askBtn.addEventListener('click', async () => {
+      const q = questionInput.value.trim();
+      if (!q) { alert('Enter a question'); return; }
+      askBtn.disabled = true;
+      answerDiv.innerHTML = 'Thinking...';
+      try {
+        const res = await fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q }) });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.detail || 'Ask failed');
+        const sources = json.sources?.map(s => `- ${s.source} (page ${s.page}) [score ${s.score.toFixed(3)}]`).join('\n') || 'None';
+        answerDiv.innerHTML = `<div class="sources"><strong>Answer</strong><pre>${json.answer}</pre><strong>Sources</strong><pre>${sources}</pre><div style="color:#6b7280;font-size:0.9rem;">Model: ${json.used_model}</div></div>`;
+      } catch (e) {
+        answerDiv.textContent = 'Error: ' + e.message;
+      } finally {
+        askBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
+
