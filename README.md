@@ -74,3 +74,14 @@ AI_Agent/
 - Large PDFs: ingestion may take time on first run while models download.
 - If you prefer local generation, you can integrate with Ollama by editing `rag_agent/llm.py` to call your local model instead of OpenAI.
 
+### 8) Deploy frontend to GitHub Pages
+
+This repo includes a static frontend in `static/`. You can deploy it to GitHub Pages and point it to a running backend.
+
+1. Ensure your FastAPI backend is hosted somewhere reachable (Render/railway/Fly/your server) and note its base URL, e.g. `https://your-backend.example.com`.
+2. Option A: Set repo variable `PAGES_API_BASE_URL` to your backend URL. Option B: Edit `static/config.js` and hardcode `window.API_BASE_URL`.
+3. Enable Pages in your repo settings (Build and deployment → Source: GitHub Actions).
+4. The included workflow publishes `static/` to Pages automatically on push to `main`.
+
+Backend hosting is not provided by Pages. Use Render/Fly/railway/Heroku. I can add a Dockerfile/Procfile if needed.
+
