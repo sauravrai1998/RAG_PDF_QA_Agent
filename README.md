@@ -83,5 +83,17 @@ This repo includes a static frontend in `static/`. You can deploy it to GitHub P
 3. Enable Pages in your repo settings (Build and deployment → Source: GitHub Actions).
 4. The included workflow publishes `static/` to Pages automatically on push to `main`.
 
-Backend hosting is not provided by Pages. Use Render/Fly/railway/Heroku. I can add a Dockerfile/Procfile if needed.
+Backend hosting is not provided by Pages. Use Render/Fly/railway/Heroku.
+
+#### Backend on Render (Docker)
+
+1. Fork/keep this repo, create a new Web Service on Render from this GitHub repo.
+2. Choose Docker as the environment; Render will pick up `Dockerfile`.
+3. Set env var `OPENAI_API_KEY` if you want LLM answers.
+4. After deploy, note the public URL (e.g., `https://rag-pdf-qa-backend.onrender.com`).
+
+#### Publishing Pages (two options)
+
+- Automatic: Set repo variable `PAGES_API_BASE_URL` to your backend URL. Push to `main`. The `pages.yml` workflow publishes `static/` with that URL.
+- Manual: Run the "Deploy Pages (manual)" workflow and provide `backend_url` input. It will publish with that value.
 
