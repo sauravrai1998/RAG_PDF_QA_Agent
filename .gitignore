@@ -1,1 +1,15 @@
 /.venv
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.DS_Store
+.cache/
+
+# Runtime data and indices
+/data/*
+!/data/.gitkeep
+
+# Model caches (HF cache typically in HOME, but keep local if exists)
+/.huggingface/
+/.cache/huggingface/
